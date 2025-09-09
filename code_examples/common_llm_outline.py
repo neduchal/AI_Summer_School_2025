@@ -40,11 +40,22 @@ def call_kky_ollama_api(
         model='gemma3:27b'
     ):
 
-    ret = None
-
-    # KKY ollama API call
-
-    return ret
+    response = client.chat(
+        model=model,
+        messages=[
+            {
+                "role": "system", 
+                "content": prompt
+            },
+            {
+                "role": "user",
+                "content": command,
+                'images': [image_path]
+            },
+        ],
+        format=AnswerLLM.model_json_schema(),        
+    )
+    return response.message.content
 
 def call_llm(image, command, prompt, openai=True, openai_api_key=None,
              kky_ollama_uname=None, kky_ollama_password=None, kky_ollama_server=None):
