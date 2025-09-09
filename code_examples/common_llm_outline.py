@@ -18,23 +18,50 @@ class AnswerLLM(BaseModel):
     response: str
     # property: Optional[Property] # placeholder. Replace with actual values.
 
+def encode_image(image_path):
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode('utf-8')
+
 def call_openai_api(
         client, 
-        image_path, 
+        image, 
         command,
         prompt
     ):
-    ret = None
+    completion = client.beta.chat.completions.parse(
+        model="gpt-4o",
+        temperature=0,
+        messages=[
+            {
+                "role": "developer", 
+                "content": prompt
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                      "type": "text",
+                      "text": command
+                    },
+                    {
+                      "type": "image_url",
+                      "image_url": {
+                        "url": f"data:image/jpeg;base64,{image}"
+                      }
+                    }
+                ]
+            }
+        ],
+        response_format=AnswerLLM,
+    )
 
-    # OpenAI API call
-
-    return ret
+    return completion.choices[0].message.parsed
 
 
 # KKY_OLLAMA_SERVER = 'https://ollama.kky.zcu.cz'
 def call_kky_ollama_api(
         client, 
-        image_path, 
+        image, 
         command,
         prompt,
         model='gemma3:27b'
@@ -50,7 +77,7 @@ def call_kky_ollama_api(
             {
                 "role": "user",
                 "content": command,
-                'images': [image_path]
+                'images': [image]
             },
         ],
         format=AnswerLLM.model_json_schema(),        
